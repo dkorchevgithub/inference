@@ -50,8 +50,9 @@ class PytorchSUT:
         rnnt_vocab = add_blank_label(dataset_vocab)
         featurizer_config = config['input_eval']
 
-        self.sut = lg.ConstructSUT(self.issue_queries, self.flush_queries,
-                                   self.process_latencies)
+        self.dev = torch.device("cuda:0") if torch.cuda.is_available() and os.environ.get("USE_GPU", "").lower() not in  [ "no", "false" ]  else torch.device("cpu")
+
+        self.sut = lg.ConstructSUT(self.issue_queries, self.flush_queries)
         self.qsl = AudioQSLInMemory(dataset_dir,
                                     manifest_filepath,
                                     dataset_vocab,
@@ -70,6 +71,7 @@ class PytorchSUT:
         )
         model.load_state_dict(load_and_migrate_checkpoint(checkpoint_path),
                               strict=True)
+        model.to(self.dev)
         model.eval()
         model.encoder = torch.jit.script(model.encoder)
         model.encoder = torch.jit._recursive.wrap_cpp_module(
@@ -110,14 +112,6 @@ class PytorchSUT:
 
     def flush_queries(self):
         pass
-
-    def process_latencies(self, latencies_ns):
-        print("Average latency (ms) per query:")
-        print(np.mean(latencies_ns)/1000000.0)
-        print("Median latency (ms): ")
-        print(np.percentile(latencies_ns, 50)/1000000.0)
-        print("90 percentile latency (ms): ")
-        print(np.percentile(latencies_ns, 90)/1000000.0)
 
     def __del__(self):
         lg.DestroySUT(self.sut)

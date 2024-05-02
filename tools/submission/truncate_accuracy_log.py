@@ -81,6 +81,8 @@ def get_hash(fname):
 def truncate_file(fname):
     """Truncate file to 4K from start and 4K from end."""
     size = os.stat(fname).st_size
+    if size < VIEWABLE_SIZE:
+       return
     with open(fname, "r") as src:
         start = src.read(VIEWABLE_SIZE)
         src.seek(size - VIEWABLE_SIZE, 0)
@@ -93,7 +95,7 @@ def truncate_file(fname):
 
 def copy_submission_dir(src, dst, filter_submitter):
     for division in list_dir(src):
-        if division not in ["closed", "open"]:
+        if division not in ["closed", "open", "network"]:
             continue
         for submitter in list_dir(os.path.join(src, division)):
             if filter_submitter and submitter != filter_submitter:
@@ -110,7 +112,7 @@ def truncate_results_dir(filter_submitter, backup):
     """
     for division in list_dir("."):
         # we are looking at ./$division, ie ./closed
-        if division not in ["closed", "open"]:
+        if division not in ["closed", "open", "network"]:
             continue
 
         for submitter in list_dir(division):

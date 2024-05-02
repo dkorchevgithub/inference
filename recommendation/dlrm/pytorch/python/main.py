@@ -157,7 +157,7 @@ def get_args():
     parser.add_argument("--max-latency", type=float, help="mlperf max latency in pct tile")
     parser.add_argument("--count-samples", type=int, help="dataset items to use")
     parser.add_argument("--count-queries", type=int, help="number of queries to use")
-    parser.add_argument("--samples-per-query-multistream", type=int, help="query length for multi-stream scenario (in terms of aggregated samples)")
+    parser.add_argument("--samples-per-query-multistream", default=8, type=int, help="query length for multi-stream scenario (in terms of aggregated samples)")
     # --samples-per-query-offline is equivalent to perf_sample_count
     parser.add_argument("--samples-per-query-offline", type=int, default=2048, help="query length for offline scenario (in terms of aggregated samples)")
     parser.add_argument("--samples-to-aggregate-fix", type=int, help="number of samples to be treated as one")
@@ -345,7 +345,7 @@ class RunnerBase:
             processed_results = self.post_process(results, qitem.batch_T, self.result_dict)
             if self.take_accuracy:
                 self.post_process.add_results(processed_results)
-                self.result_timing.append(time.time() - qitem.start)
+            self.result_timing.append(time.time() - qitem.start)
         except Exception as ex:  # pylint: disable=broad-except
             log.error("thread: failed, %s", ex)
             # since post_process will not run, fake empty responses
@@ -552,11 +552,6 @@ def main():
     def flush_queries():
         pass
 
-    def process_latencies(latencies_ns):
-        # called by loadgen to show us the recorded latencies
-        global last_timeing
-        last_timeing = [t / NANO_SEC for t in latencies_ns]
-
     settings = lg.TestSettings()
     settings.FromConfig(mlperf_conf, args.model_path, args.scenario)
     settings.FromConfig(user_conf, args.model_path, args.scenario)
@@ -586,9 +581,9 @@ def main():
 
     if args.max_latency:
         settings.server_target_latency_ns = int(args.max_latency * NANO_SEC)
-        settings.multi_stream_target_latency_ns = int(args.max_latency * NANO_SEC)
+        settings.multi_stream_expected_latency_ns = int(args.max_latency * NANO_SEC)
 
-    sut = lg.ConstructSUT(issue_queries, flush_queries, process_latencies)
+    sut = lg.ConstructSUT(issue_queries, flush_queries)
     qsl = lg.ConstructQSL(count, min(count, args.samples_per_query_offline), ds.load_query_samples, ds.unload_query_samples)
 
     log.info("starting {}".format(scenario))

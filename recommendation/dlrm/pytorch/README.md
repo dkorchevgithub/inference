@@ -38,6 +38,8 @@ pip install torchviz
 pip install protobuf
 pip install tqdm
 pip install onnxruntime
+pip install onnx
+pip install "git+https://github.com/mlperf/logging.git"
 ```
 
 ### Prepare the code and dataset
@@ -48,6 +50,9 @@ mkdir ./mlcommons && cd ./mlcommons
 git clone --recurse-submodules https://github.com/mlcommons/training.git
 git clone --recurse-submodules https://github.com/mlcommons/inference.git
 export DLRM_DIR=$HOME/mlcommons/training/recommendation/dlrm
+cd $HOME/mlcommons/training/recommendation/dlrm
+git checkout -b dlrm f06d3deed5a15710fb28e0ede0af31ebd53789cb
+cd $HOME
 ```
 2. Download pre-trained model weights (see links available above)
 ```
@@ -411,7 +416,7 @@ usage: main.py [-h]
 
 `--max-latency MAX_LATENCY` comma separated list of which latencies (in seconds) we try to reach in the 99 percentile (default: 0.01,0.05,0.100).
 
-`--samples-per-query-multistream` maximum number of (aggregated) samples per query in MultiStream scenario.
+`--samples-per-query-multistream` number of (aggregated) samples per query in MultiStream scenario (default: 8).
 
 `--samples-per-query-offline` maximum number of (aggregated) samples per query in Offline scenario.
 
@@ -427,7 +432,7 @@ usage: main.py [-h]
 
 `--accuracy` perform inference on the entire dataset to validate achieved model accuracy/AUC metric.
 
-`--find-peak-performance` determine the maximum QPS for the Server and samples per query for the MultiStream, while not applicable to other scenarios.
+`--find-peak-performance` determine the maximum QPS for the Server, while not applicable to other scenarios.
 
 ## License
 
